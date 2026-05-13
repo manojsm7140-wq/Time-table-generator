@@ -195,6 +195,9 @@ The parser (`timetable/excel_parser.py`) does:
 ![image alt](https://github.com/manojsm7140-wq/Time-table-generator/blob/dbb2c0302fa9fede20968e0368f1f24e6434354c/WhatsApp%20Image%202026-04-24%20at%2012.11.10.jpeg)
 
 
+![image alt](https://github.com/manojsm7140-wq/Time-table-generator/blob/a4626fae25f520ec00dec6308672f21488a3460d/WhatsApp%20Image%202026-04-24%20at%2012.11.37.jpeg)
+
+
 ![image alt](https://github.com/manojsm7140-wq/Time-table-generator/blob/a1d8117fa065f5ab3bf6f5ea2697410ee4817a60/WhatsApp%20Image%202026-04-24%20at%2012.11.24.jpeg)
 
 
