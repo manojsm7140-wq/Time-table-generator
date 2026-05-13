@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - TimetableGen{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+{% load timetable_tags %}
+<div class="row g-4 mb-4">
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <span style="color:#94a3b8; font-size:0.75rem; font-weight:600; letter-spacing:0.5px; text-transform:uppercase;">Classes</span>
+        <i class="bi bi-mortarboard" style="color:#e94560; font-size:1.2rem;"></i>
+      </div>
+      <div class="stat-number">{{ total_classes }}</div>
+      <div class="stat-label">Active class sections</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <span style="color:#94a3b8; font-size:0.75rem; font-weight:600; letter-spacing:0.5px; text-transform:uppercase;">Entries</span>
+        <i class="bi bi-calendar3" style="color:#60a5fa; font-size:1.2rem;"></i>
+      </div>
+      <div class="stat-number" style="color:#60a5fa;">{{ total_entries }}</div>
+      <div class="stat-label">Total timetable slots</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <span style="color:#94a3b8; font-size:0.75rem; font-weight:600; letter-spacing:0.5px; text-transform:uppercase;">Conflicts</span>
+        <i class="bi bi-exclamation-triangle" style="color:#f59e0b; font-size:1.2rem;"></i>
+      </div>
+      <div class="stat-number" style="color:{% if total_conflicts > 0 %}#f59e0b{% else %}#34d399{% endif %};">{{ total_conflicts }}</div>
+      <div class="stat-label">Scheduling conflicts</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <span style="color:#94a3b8; font-size:0.75rem; font-weight:600; letter-spacing:0.5px; text-transform:uppercase;">Semester</span>
+        <i class="bi bi-journal-bookmark" style="color:#a78bfa; font-size:1.2rem;"></i>
+      </div>
+      <div style="font-size:1.3rem; font-weight:800; font-family:'Syne',sans-serif; color:#a78bfa;">2025-26</div>
+      <div class="stat-label">Even Semester Active</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Quick Access Timetable -->
+  <div class="col-lg-8">
+    <div class="glass-card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
+        <h6 style="font-family:'Syne',sans-serif; font-weight:700; margin:0;">Quick Timetable View</h6>
+        <a href="{% url 'timetable:view_timetable' %}" class="btn-accent" style="text-decoration:none; font-size:0.78rem; padding:6px 14px;">
+          Full View <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+      </div>
+
+      {% if class_labels %}
+      <div class="mb-3">
+        <select id="quickClassSelect" class="form-select form-select-sm" style="max-width:280px;">
+          {% for label in class_labels %}
+          <option value="{{ label }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <p style="color:#94a3b8; font-size:0.8rem;">Select a class above and click <a href="{% url 'timetable:view_timetable' %}" style="color:#e94560;">View Timetable</a> for the full grid.</p>
+      {% else %}
+      <div style="text-align:center; padding:40px 20px;">
+        <i class="bi bi-cloud-upload" style="font-size:3rem; color:#94a3b8; display:block; margin-bottom:12px;"></i>
+        <p style="color:#94a3b8; margin-bottom:16px;">No timetable data yet. Upload an Excel file to get started.</p>
+        {% if user.role == 'admin' %}
+        <a href="{% url 'timetable:upload' %}" class="btn-accent" style="text-decoration:none;">
+          <i class="bi bi-upload me-2"></i>Upload Excel
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Conflicts + Uploads -->
+  <div class="col-lg-4">
+    {% if total_conflicts > 0 %}
+    <div class="glass-card mb-4" style="border-color:rgba(233,69,96,0.3);">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+        <i class="bi bi-exclamation-circle" style="color:#e94560;"></i>
+        <h6 style="font-family:'Syne',sans-serif; font-weight:700; margin:0; color:#e94560;">Active Conflicts</h6>
+      </div>
+      {% for c in conflicts %}
+      <div style="padding:10px; background:rgba(233,69,96,0.08); border-radius:8px; margin-bottom:8px; border-left:3px solid #e94560;">
+        <div style="font-size:0.75rem; font-weight:600; color:#fca5a5;">{{ c.conflict_type|title|cut:"_" }}</div>
+        <div style="font-size:0.7rem; color:#94a3b8; margin-top:3px;">{{ c.day }} {{ c.time_slot }}</div>
+      </div>
+      {% endfor %}
+      <a href="{% url 'timetable:conflicts' %}" style="font-size:0.78rem; color:#e94560; text-decoration:none;">View all conflicts →</a>
+    </div>
+    {% endif %}
+
+    <div class="glass-card">
+      <h6 style="font-family:'Syne',sans-serif; font-weight:700; margin-bottom:14px;">Recent Uploads</h6>
+      {% for upload in recent_uploads %}
+      <div style="padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; align-items:center; gap:10px;">
+        <i class="bi bi-file-earmark-spreadsheet" style="color:{% if upload.upload_type == 'timetable' %}#60a5fa{% else %}#34d399{% endif %}; font-size:1.1rem;"></i>
+        <div style="flex:1; overflow:hidden;">
+          <div style="font-size:0.78rem; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ upload.file.name|cut:"uploads/" }}</div>
+          <div style="font-size:0.68rem; color:#94a3b8;">{{ upload.uploaded_at|date:"d M Y H:i" }}</div>
+        </div>
+        {% if upload.processed %}
+        <i class="bi bi-check-circle-fill" style="color:#34d399; font-size:0.9rem;"></i>
+        {% else %}
+        <a href="{% url 'timetable:process_upload' upload.id %}" style="font-size:0.68rem; color:#e94560; text-decoration:none; white-space:nowrap;">Process</a>
+        {% endif %}
+      </div>
+      {% empty %}
+      <p style="color:#94a3b8; font-size:0.8rem;">No uploads yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('quickClassSelect')?.addEventListener('change', function() {
+  window.location.href = "{% url 'timetable:view_timetable' %}?class_label=" + encodeURIComponent(this.value);
+});
+</script>
+{% endblock %}

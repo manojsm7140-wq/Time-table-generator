@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Add Staff - TimetableGen{% endblock %}
+{% block page_title %}Add Staff Member{% endblock %}
+
+{% block content %}
+<div style="max-width:600px;">
+  <div class="glass-card">
+    <h6 style="font-family:'Syne',sans-serif; font-weight:700; margin-bottom:20px;">
+      <i class="bi bi-person-plus me-2" style="color:#e94560;"></i>New Staff Account
+    </h6>
+    <form method="post">
+      {% csrf_token %}
+      <div class="row g-3 mb-3">
+        <div class="col-6">
+          <label class="form-label">First Name *</label>
+          <input type="text" name="first_name" class="form-control" required>
+        </div>
+        <div class="col-6">
+          <label class="form-label">Last Name</label>
+          <input type="text" name="last_name" class="form-control">
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="email" name="email" class="form-control">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Username *</label>
+        <input type="text" name="username" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Password *</label>
+        <input type="password" name="password" class="form-control" required>
+      </div>
+      <div class="mb-4">
+        <label class="form-label">Assigned Subjects</label>
+        <select name="subjects" multiple class="form-select" style="height:150px;">
+          {% for s in subjects %}
+          <option value="{{ s.id }}">{{ s.code }} - {{ s.name }}</option>
+          {% endfor %}
+        </select>
+        <div style="font-size:0.7rem; color:#94a3b8; margin-top:4px;">Hold Ctrl/Cmd to select multiple subjects.</div>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button type="submit" class="btn-accent" style="flex:1; padding:11px;">
+          <i class="bi bi-person-plus me-2"></i>Create Staff Account
+        </button>
+        <a href="{% url 'management:staff_list' %}" class="btn-outline-accent" style="text-decoration:none; padding:11px 18px;">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}My Schedule - TimetableGen{% endblock %}
+{% block page_title %}Staff Schedule{% endblock %}
+
+{% block content %}
+{% load timetable_tags %}
+<div class="glass-card mb-4">
+  <div class="row align-items-center">
+    <div class="col">
+      <h5 style="font-family:'Syne',sans-serif; font-weight:700; margin:0;">{{ profile.user.get_full_name }}</h5>
+      <small style="color:#94a3b8;">{{ profile.department.name|default:"" }}</small>
+    </div>
+    {% if user.role == 'admin' and all_staff %}
+    <div class="col-auto">
+      <select class="form-select form-select-sm" onchange="window.location.href='?staff_id='+this.value" style="min-width:200px;">
+        {% for s in all_staff %}
+        <option value="{{ s.id }}" {% if s.id == profile.id %}selected{% endif %}>{{ s.user.get_full_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="glass-card" style="padding:0; overflow:hidden;">
+  <div style="padding:14px 20px; border-bottom:1px solid rgba(255,255,255,0.06);">
+    <h6 style="font-family:'Syne',sans-serif; margin:0; font-weight:700;">Weekly Schedule</h6>
+    <small style="color:#94a3b8;">{{ entries|length }} teaching slots this week</small>
+  </div>
+  <div style="overflow-x:auto; padding:12px;">
+    <table style="border-collapse:separate; border-spacing:0; min-width:800px; width:100%;">
+      <thead>
+        <tr>
+          <th style="background:#16213e; color:#94a3b8; font-size:0.7rem; font-weight:700; text-transform:uppercase; padding:10px 14px; min-width:120px;">Time</th>
+          {% for day in days %}
+          <th style="background:#0f3460; color:#e2e8f0; font-family:'Syne',sans-serif; font-size:0.78rem; font-weight:700; padding:10px 14px; text-align:center; border-right:1px solid rgba(255,255,255,0.06);">{{ days_full|get_item:day }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for slot, slot_label in time_slots %}
+        <tr>
+          <th style="background:#16213e; color:#94a3b8; font-size:0.7rem; font-weight:700; text-transform:uppercase; padding:10px 14px; white-space:nowrap;">{{ slot_label }}</th>
+          {% for day in days %}
+          <td style="vertical-align:top; padding:6px; border-right:1px solid rgba(255,255,255,0.05); border-bottom:1px solid rgba(255,255,255,0.05); background:rgba(255,255,255,0.02); min-width:120px;">
+            {% with cell_entries=grid|get_item:day|get_item:slot %}
+            {% if cell_entries %}
+              {% for entry in cell_entries %}
+              <span style="display:block; background:linear-gradient(135deg,rgba(15,52,96,0.9),rgba(22,33,62,0.9)); border:1px solid rgba(96,165,250,0.2); border-radius:6px; padding:6px 8px; margin-bottom:3px;">
+                <div style="font-size:0.78rem; font-weight:700; color:#7dd3fc; font-family:'Syne',sans-serif;">{{ entry.raw_subject_code }}</div>
+                <div style="font-size:0.65rem; color:#94a3b8;">{{ entry.class_label|truncatechars:20 }}</div>
+                {% if entry.raw_room_number %}<div style="font-size:0.62rem; color:#64748b;">Room {{ entry.raw_room_number }}</div>{% endif %}
+              </span>
+              {% endfor %}
+            {% else %}
+              <div style="display:flex; align-items:center; justify-content:center; min-height:40px;">
+                <div style="width:4px; height:4px; border-radius:50%; background:rgba(255,255,255,0.1);"></div>
+              </div>
+            {% endif %}
+            {% endwith %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

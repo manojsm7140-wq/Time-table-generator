@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Conflict Report - TimetableGen{% endblock %}
+{% block page_title %}Conflict Report{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+  <div class="col-sm-4">
+    <div class="stat-card">
+      <div class="stat-number" style="color:#f59e0b;">{{ conflicts|length }}</div>
+      <div class="stat-label">Total Conflicts Detected</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="stat-card">
+      <div class="stat-number" style="color:#e94560;">{{ conflicts|length }}</div>
+      <div class="stat-label">Unresolved</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="glass-card d-flex align-items-center justify-content-center" style="min-height:80px;">
+      {% if user.role == 'admin' %}
+      <a href="{% url 'timetable:regenerate' %}" class="btn-accent" style="text-decoration:none;">
+        <i class="bi bi-arrow-clockwise me-2"></i>Re-run Detection
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="glass-card">
+  <h6 style="font-family:'Syne',sans-serif; font-weight:700; margin-bottom:16px;">
+    <i class="bi bi-exclamation-triangle me-2" style="color:#f59e0b;"></i>Detected Conflicts
+  </h6>
+
+  {% if conflicts %}
+  <div style="overflow-x:auto;">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Day</th>
+          <th>Time Slot</th>
+          <th>Detail</th>
+          <th>Status</th>
+          <th>Detected</th>
+          {% if user.role == 'admin' %}<th>Action</th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in conflicts %}
+        <tr>
+          <td>
+            <span style="padding:3px 10px; border-radius:12px; font-size:0.7rem; font-weight:700;
+              {% if c.conflict_type == 'room_double_booking' %}background:rgba(233,69,96,0.15);color:#e94560;{% elif c.conflict_type == 'staff_clash' %}background:rgba(245,158,11,0.15);color:#f59e0b;{% else %}background:rgba(148,163,184,0.1);color:#94a3b8;{% endif %}">
+              {{ c.get_conflict_type_display }}
+            </span>
+          </td>
+          <td style="font-weight:600;">{{ c.day|default:"-" }}</td>
+          <td style="color:#94a3b8; font-size:0.8rem;">{{ c.time_slot|default:"-" }}</td>
+          <td style="font-size:0.8rem; max-width:300px;">{{ c.detail }}</td>
+          <td>
+            {% if c.resolved %}
+            <span style="color:#34d399; font-size:0.75rem;"><i class="bi bi-check-circle me-1"></i>Resolved</span>
+            {% else %}
+            <span style="color:#e94560; font-size:0.75rem;"><i class="bi bi-x-circle me-1"></i>Open</span>
+            {% endif %}
+          </td>
+          <td style="color:#94a3b8; font-size:0.75rem;">{{ c.detected_at|date:"d M, H:i" }}</td>
+          {% if user.role == 'admin' %}
+          <td>
+            {% if not c.resolved %}
+            <form method="post" style="display:inline;">
+              {% csrf_token %}
+              <input type="hidden" name="conflict_id" value="{{ c.id }}">
+              <button type="submit" style="background:none; border:none; color:#34d399; font-size:0.75rem; cursor:pointer; padding:0;">
+                <i class="bi bi-check-circle me-1"></i>Resolve
+              </button>
+            </form>
+            {% endif %}
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align:center; padding:50px 20px;">
+    <i class="bi bi-check-circle" style="font-size:3rem; color:#34d399; display:block; margin-bottom:12px;"></i>
+    <h5 style="font-family:'Syne',sans-serif; font-weight:700; color:#34d399;">No Conflicts Detected!</h5>
+    <p style="color:#94a3b8; margin-top:8px;">The timetable is conflict-free. All rooms and staff are properly allocated.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

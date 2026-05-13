@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Subjects - TimetableGen{% endblock %}
+{% block page_title %}Manage Subjects{% endblock %}
+
+{% block content %}
+{% load timetable_tags %}
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="glass-card">
+      <h6 style="font-family:'Syne',sans-serif; font-weight:700; margin-bottom:16px;">
+        <i class="bi bi-plus-circle me-2" style="color:#e94560;"></i>Add / Update Subject
+      </h6>
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label">Subject Code *</label>
+          <input type="text" name="code" class="form-control" placeholder="e.g. COM, ENG, KAN" required>
+          <div style="font-size:0.68rem; color:#94a3b8; margin-top:4px;">As it appears in the Excel file (e.g. COM, ENG, KAN, BCA)</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Subject Name *</label>
+          <input type="text" name="name" class="form-control" placeholder="e.g. Commerce, English" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Type</label>
+          <select name="subject_type" class="form-select">
+            <option value="theory">Theory</option>
+            <option value="lab">Laboratory</option>
+            <option value="elective">Elective</option>
+          </select>
+        </div>
+        <div class="mb-4">
+          <label class="form-label">Hours per Week</label>
+          <input type="number" name="hours_per_week" class="form-control" value="4" min="1" max="20">
+        </div>
+        <button type="submit" class="btn-accent w-100">
+          <i class="bi bi-check2 me-2"></i>Save Subject
+        </button>
+      </form>
+    </div>
+
+    <div class="glass-card mt-4" style="border-left:3px solid #60a5fa;">
+      <h6 style="font-family:'Syne',sans-serif; font-weight:700; margin-bottom:10px; color:#60a5fa;">
+        <i class="bi bi-lightbulb me-2"></i>Subject Codes Found in Excel
+      </h6>
+      <p style="font-size:0.78rem; color:#94a3b8; margin-bottom:10px;">Common codes from your uploaded timetable:</p>
+      <div style="display:flex; flex-wrap:wrap; gap:6px;">
+        {% for code in "COM ENG KAN HIN SAN PHY CHEM MATHS BCA BOT ZOO ECO CS EVS POL SC HIS BT IC MICRO BIOCHEM"|split:" " %}
+        <span style="background:rgba(96,165,250,0.1); border:1px solid rgba(96,165,250,0.2); border-radius:6px; padding:3px 10px; font-size:0.72rem; color:#60a5fa; font-weight:600;">{{ code }}</span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="glass-card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+        <h6 style="font-family:'Syne',sans-serif; font-weight:700; margin:0;">All Subjects ({{ subjects|length }})</h6>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Hrs/Week</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in subjects %}
+            <tr>
+              <td><code style="background:rgba(96,165,250,0.1); color:#7dd3fc; padding:2px 8px; border-radius:4px; font-size:0.78rem;">{{ s.code }}</code></td>
+              <td style="font-weight:500;">{{ s.name }}</td>
+              <td>
+                <span style="font-size:0.7rem; padding:2px 8px; border-radius:10px;
+                  {% if s.subject_type == 'theory' %}background:rgba(96,165,250,0.1);color:#60a5fa;
+                  {% elif s.subject_type == 'lab' %}background:rgba(52,211,153,0.1);color:#34d399;
+                  {% else %}background:rgba(167,139,250,0.1);color:#a78bfa;{% endif %}">
+                  {{ s.get_subject_type_display }}
+                </span>
+              </td>
+              <td style="color:#94a3b8;">{{ s.hours_per_week }}h</td>
+              <td>
+                <a href="{% url 'management:delete_subject' s.pk %}" 
+                   style="color:#e94560; font-size:0.78rem; text-decoration:none;"
+                   onclick="return confirm('Delete {{ s.code }}?')">
+                  <i class="bi bi-trash"></i>
+                </a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:30px;">No subjects added yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

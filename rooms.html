@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}Rooms - TimetableGen{% endblock %}
+{% block page_title %}Manage Rooms{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="glass-card">
+      <h6 style="font-family:'Syne',sans-serif; font-weight:700; margin-bottom:16px;">
+        <i class="bi bi-plus-circle me-2" style="color:#e94560;"></i>Add Room
+      </h6>
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label">Room Number *</label>
+          <input type="text" name="room_number" class="form-control" placeholder="e.g. 215, 106, 120" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Room Type</label>
+          <select name="room_type" class="form-select">
+            <option value="classroom">Classroom</option>
+            <option value="lab">Laboratory</option>
+            <option value="seminar">Seminar Hall</option>
+          </select>
+        </div>
+        <div class="mb-4">
+          <label class="form-label">Capacity</label>
+          <input type="number" name="capacity" class="form-control" value="60" min="10" max="500">
+        </div>
+        <button type="submit" class="btn-accent w-100">
+          <i class="bi bi-check2 me-2"></i>Save Room
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="glass-card">
+      <h6 style="font-family:'Syne',sans-serif; font-weight:700; margin-bottom:16px;">All Rooms ({{ rooms|length }})</h6>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Room No.</th>
+            <th>Type</th>
+            <th>Capacity</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rooms %}
+          <tr>
+            <td>
+              <span style="font-size:1rem; font-weight:700; font-family:'Syne',sans-serif;">{{ r.room_number }}</span>
+            </td>
+            <td>
+              <span style="font-size:0.7rem; padding:2px 8px; border-radius:10px;
+                {% if r.room_type == 'classroom' %}background:rgba(96,165,250,0.1);color:#60a5fa;
+                {% elif r.room_type == 'lab' %}background:rgba(52,211,153,0.1);color:#34d399;
+                {% else %}background:rgba(167,139,250,0.1);color:#a78bfa;{% endif %}">
+                {{ r.get_room_type_display }}
+              </span>
+            </td>
+            <td style="color:#94a3b8;">{{ r.capacity }} seats</td>
+            <td>
+              <a href="{% url 'management:delete_room' r.pk %}"
+                 style="color:#e94560; font-size:0.78rem; text-decoration:none;"
+                 onclick="return confirm('Delete Room {{ r.room_number }}?')">
+                <i class="bi bi-trash"></i>
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" style="text-align:center; color:#94a3b8; padding:30px;">No rooms added. Upload room mapping file to auto-populate.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

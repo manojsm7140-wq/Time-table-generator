@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}Upload Excel - TimetableGen{% endblock %}
+{% block page_title %}Upload Excel Files{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="glass-card">
+      <h6 style="font-family:'Syne',sans-serif; font-weight:700; margin-bottom:6px;">
+        <i class="bi bi-cloud-upload me-2" style="color:#e94560;"></i>Upload Excel File
+      </h6>
+      <p style="color:#94a3b8; font-size:0.8rem; margin-bottom:20px;">
+        Upload either the student timetable file (SUBJECT-ROOM format) or the room mapping file.
+      </p>
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label">File Type</label>
+          <select name="upload_type" class="form-select" required>
+            <option value="timetable">📋 Student Timetable File (.xls / .xlsx)</option>
+            <option value="room_mapping">🏫 Room Mapping File (.xlsx)</option>
+          </select>
+        </div>
+        <div class="mb-4">
+          <label class="form-label">Select File</label>
+          <div class="upload-zone" onclick="document.getElementById('fileInput').click();" id="dropZone">
+            <i class="bi bi-file-earmark-spreadsheet"></i>
+            <p style="color:#94a3b8; margin-top:12px; font-size:0.875rem;" id="fileLabel">
+              Click to select or drag & drop<br>
+              <small>Supported: .xls, .xlsx</small>
+            </p>
+          </div>
+          <input type="file" name="file" id="fileInput" accept=".xls,.xlsx" required style="display:none;" onchange="updateLabel(this)">
+        </div>
+        <button type="submit" class="btn-accent w-100" style="padding:11px;">
+          <i class="bi bi-upload me-2"></i>Upload File
+        </button>
+      </form>
+    </div>
+
+    <div class="glass-card mt-4">
+      <h6 style="font-family:'Syne',sans-serif; font-weight:700; margin-bottom:12px;">
+        <i class="bi bi-info-circle me-2" style="color:#60a5fa;"></i>Excel Format Guide
+      </h6>
+      <div style="font-size:0.8rem; color:#94a3b8; line-height:1.7;">
+        <p><strong style="color:#e2e8f0;">Timetable File:</strong> Each class section listed with days (MONDAY, TUESDAY...) and time slots containing entries like <code style="background:rgba(255,255,255,0.08); padding:2px 6px; border-radius:4px; color:#7dd3fc;">COM - 215</code></p>
+        <p style="margin-top:8px;"><strong style="color:#e2e8f0;">Format:</strong> <code style="background:rgba(255,255,255,0.08); padding:2px 6px; border-radius:4px; color:#7dd3fc;">SUBJECT_CODE - ROOM_NUMBER</code></p>
+        <p style="margin-top:8px;"><strong style="color:#e2e8f0;">Room Mapping:</strong> Day-wise sheets (MON, TUE...) with ROOM NO in column A and subject codes in time-slot columns.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="glass-card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+        <h6 style="font-family:'Syne',sans-serif; font-weight:700; margin:0;">Upload History</h6>
+        <span style="color:#94a3b8; font-size:0.75rem;">{{ uploads|length }} files</span>
+      </div>
+      {% for upload in uploads %}
+      <div style="padding:14px; background:var(--card-bg); border:1px solid var(--border); border-radius:10px; margin-bottom:8px;">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
+          <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:0;">
+            <i class="bi bi-file-earmark-spreadsheet" style="color:{% if upload.upload_type == 'timetable' %}#60a5fa{% else %}#34d399{% endif %}; font-size:1.4rem; flex-shrink:0;"></i>
+            <div style="min-width:0;">
+              <div style="font-size:0.82rem; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                {{ upload.file.name|cut:"uploads/" }}
+              </div>
+              <div style="font-size:0.7rem; color:#94a3b8; margin-top:2px;">
+                {{ upload.get_upload_type_display }} &middot; {{ upload.uploaded_at|date:"d M Y, H:i" }}
+              </div>
+              {% if upload.notes %}
+              <div style="font-size:0.68rem; color:#94a3b8; margin-top:3px; font-style:italic;">{{ upload.notes }}</div>
+              {% endif %}
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+            {% if upload.processed %}
+            <span style="font-size:0.68rem; color:#34d399; background:rgba(52,211,153,0.1); padding:3px 8px; border-radius:12px; border:1px solid rgba(52,211,153,0.3);">
+              <i class="bi bi-check-circle me-1"></i>Processed
+            </span>
+            {% else %}
+            <a href="{% url 'timetable:process_upload' upload.id %}" class="btn-accent" style="text-decoration:none; font-size:0.72rem; padding:5px 12px;">
+              <i class="bi bi-play-circle me-1"></i>Process
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div style="text-align:center; padding:30px; color:#94a3b8;">
+        <i class="bi bi-inbox" style="font-size:2rem; display:block; margin-bottom:8px;"></i>
+        No files uploaded yet.
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateLabel(input) {
+  const label = document.getElementById('fileLabel');
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    label.innerHTML = `<strong style="color:#e2e8f0;">${file.name}</strong><br><small>${(file.size/1024).toFixed(1)} KB</small>`;
+    document.getElementById('dropZone').style.borderColor = '#e94560';
+  }
+}
+// Drag and drop
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.borderColor='#e94560'; });
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  const input = document.getElementById('fileInput');
+  input.files = e.dataTransfer.files;
+  updateLabel(input);
+});
+</script>
+{% endblock %}

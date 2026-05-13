@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% block title %}Timetable View - TimetableGen{% endblock %}
+{% block page_title %}Timetable Grid{% endblock %}
+
+{% block extra_head %}
+{% load timetable_tags %}
+<style>
+  .tt-wrapper { overflow-x: auto; }
+  .tt-outer-table { border-collapse: separate; border-spacing: 0; min-width: 900px; width: 100%; }
+  .tt-outer-table th.day-header {
+    background: #0f3460;
+    color: #e2e8f0;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 10px 14px;
+    text-align: center;
+    border-right: 1px solid rgba(255,255,255,0.06);
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+  }
+  .tt-outer-table th.slot-header {
+    background: #16213e;
+    color: #94a3b8;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 8px 12px;
+    text-align: left;
+    border-right: 1px solid rgba(255,255,255,0.06);
+    white-space: nowrap;
+    min-width: 130px;
+    width: 130px;
+  }
+  .tt-outer-table td.tt-data {
+    vertical-align: top;
+    padding: 6px;
+    border-right: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.02);
+    min-height: 50px;
+  }
+  .tt-outer-table tr:hover td.tt-data { background: rgba(255,255,255,0.04); }
+  .entry-chip {
+    display: block;
+    background: linear-gradient(135deg, rgba(15,52,96,0.9) 0%, rgba(22,33,62,0.9) 100%);
+    border: 1px solid rgba(96,165,250,0.2);
+    border-radius: 6px;
+    padding: 6px 8px;
+    margin-bottom: 3px;
+    cursor: default;
+    transition: border-color 0.2s;
+  }
+  .entry-chip:hover { border-color: rgba(96,165,250,0.5); }
+  .entry-chip.conflict-chip {
+    background: linear-gradient(135deg, rgba(127,29,29,0.8) 0%, rgba(69,10,10,0.8) 100%);
+    border-color: rgba(233,69,96,0.4);
+    animation: pulse-conflict 2s infinite;
+  }
+  @keyframes pulse-conflict { 0%,100%{border-color:rgba(233,69,96,0.4)} 50%{border-color:rgba(233,69,96,0.8)} }
+  .chip-subject { font-size: 0.78rem; font-weight: 700; color: #7dd3fc; font-family: 'Syne', sans-serif; }
+  .chip-room { font-size: 0.65rem; color: #94a3b8; margin-top: 1px; }
+  .chip-class { font-size: 0.6rem; color: #64748b; }
+  .conflict-chip .chip-subject { color: #fca5a5; }
+  .empty-slot { display: flex; align-items: center; justify-content: center; min-height: 40px; }
+  .empty-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.1); }
+  .view-tabs { display: flex; gap: 4px; background: rgba(255,255,255,0.04); padding: 4px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); }
+  .view-tab { padding: 7px 16px; border-radius: 7px; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: none; color: #94a3b8; transition: all 0.2s; }
+  .view-tab.active, .view-tab:hover { background: #e94560; color: #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Controls Bar -->
+<div class="glass-card mb-4">
+  <div class="row g-3 align-items-center">
+    <div class="col-auto">
+      <div class="view-tabs">
+        <a href="?view=class&class_label={{ selected_class }}" class="view-tab {% if view_type == 'class' %}active{% endif %}">
+          <i class="bi bi-mortarboard me-1"></i>Class View
+        </a>
+        <a href="?view=room" class="view-tab {% if view_type == 'room' %}active{% endif %}">
+          <i class="bi bi-door-open me-1"></i>Room View
+        </a>
+      </div>
+    </div>
+
+    {% if view_type == 'class' %}
+    <div class="col-md-4">
+      <select class="form-select" id="classSelector" onchange="filterClass(this.value)">
+        <option value="">-- Select Class Section --</option>
+        {% for label in class_labels %}
+        <option value="{{ label }}" {% if label == selected_class %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% elif view_type == 'room' %}
+    <div class="col-md-4">
+      <select class="form-select" id="roomSelector" onchange="filterRoom(this.value)">
+        <option value="">-- Select Room --</option>
+        {% for room in rooms %}
+        <option value="{{ room.room_number }}" {% if room.room_number == selected_room %}selected{% endif %}>
+          Room {{ room.room_number }} ({{ room.get_room_type_display }})
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endif %}
+
+    <div class="col-auto ms-auto">
+      {% if conflict_count > 0 %}
+      <a href="{% url 'timetable:conflicts' %}" class="conflict-badge" style="text-decoration:none;">
+        <i class="bi bi-exclamation-triangle me-1"></i>{{ conflict_count }} Conflicts
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% if selected_class or view_type == 'room' %}
+<!-- Timetable Grid -->
+<div class="glass-card" style="padding:0; overflow:hidden;">
+  <div style="padding:16px 20px; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:space-between;">
+    <div>
+      <h6 style="font-family:'Syne',sans-serif; font-weight:700; margin:0;">
+        {% if view_type == 'class' %}{{ selected_class }}{% else %}Room View{% endif %}
+      </h6>
+      <small style="color:#94a3b8;">Even Semester 2025-26 &middot; {{ entries|length }} slots filled</small>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <div style="display:flex; align-items:center; gap:5px; font-size:0.72rem; color:#94a3b8;">
+        <div style="width:10px; height:10px; background:linear-gradient(135deg,#0f3460,#16213e); border-radius:2px; border:1px solid rgba(96,165,250,0.3);"></div> Class
+      </div>
+      <div style="display:flex; align-items:center; gap:5px; font-size:0.72rem; color:#94a3b8;">
+        <div style="width:10px; height:10px; background:linear-gradient(135deg,#7f1d1d,#450a0a); border-radius:2px; border:1px solid rgba(233,69,96,0.4);"></div> Conflict
+      </div>
+      {% if selected_class %}
+      <a href="{% url 'timetable:export_excel' %}?class_label={{ selected_class|urlencode }}"
+         style="text-decoration:none; background:rgba(52,211,153,0.15); color:#34d399; border:1px solid rgba(52,211,153,0.3); border-radius:6px; padding:4px 12px; font-size:0.72rem; font-weight:600;">
+        <i class="bi bi-file-earmark-spreadsheet me-1"></i>Excel
+      </a>
+      <a href="{% url 'timetable:export_pdf' %}?class_label={{ selected_class|urlencode }}"
+         style="text-decoration:none; background:rgba(233,69,96,0.15); color:#e94560; border:1px solid rgba(233,69,96,0.3); border-radius:6px; padding:4px 12px; font-size:0.72rem; font-weight:600;">
+        <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="tt-wrapper" style="padding:12px;">
+    <table class="tt-outer-table">
+      <thead>
+        <tr>
+          <th class="slot-header" style="position:sticky; left:0; z-index:10; background:#16213e;">Time Slot</th>
+          {% for day in days %}
+          <th class="day-header">{{ days_full|get_item:day }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for slot, slot_label in time_slots %}
+        <tr>
+          <th class="slot-header" style="position:sticky; left:0; z-index:5; background:#16213e;">
+            {{ slot_label }}
+          </th>
+          {% for day in days %}
+          <td class="tt-data">
+            {% with cell_entries=grid|get_item:day|get_item:slot %}
+            {% if cell_entries %}
+              {% for entry in cell_entries %}
+              <span class="entry-chip {% if entry.has_conflict %}conflict-chip{% endif %}" 
+                    title="{{ entry.class_label }} | {{ entry.raw_entry }}">
+                <div class="chip-subject">
+                  {{ entry.raw_subject_code|default:entry.raw_entry }}
+                </div>
+                {% if entry.raw_room_number %}
+                <div class="chip-room"><i class="bi bi-geo-alt" style="font-size:0.6rem;"></i> Room {{ entry.raw_room_number }}</div>
+                {% endif %}
+                {% if view_type == 'room' %}
+                <div class="chip-class">{{ entry.class_label|truncatechars:25 }}</div>
+                {% endif %}
+              </span>
+              {% endfor %}
+            {% else %}
+              <div class="empty-slot"><div class="empty-dot"></div></div>
+            {% endif %}
+            {% endwith %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% else %}
+<!-- No class selected yet -->
+<div style="text-align:center; padding:60px 20px;">
+  <i class="bi bi-table" style="font-size:4rem; color:#94a3b8; display:block; margin-bottom:16px;"></i>
+  <h5 style="font-family:'Syne',sans-serif; font-weight:700; margin-bottom:8px;">Select a Class Section</h5>
+  <p style="color:#94a3b8; max-width:400px; margin:0 auto 20px;">
+    Choose a class section from the dropdown above to view its weekly timetable.
+    {% if not class_labels %}Upload an Excel file first to load timetable data.{% endif %}
+  </p>
+  {% if user.role == 'admin' and not class_labels %}
+  <a href="{% url 'timetable:upload' %}" class="btn-accent" style="text-decoration:none;">
+    <i class="bi bi-upload me-2"></i>Upload Excel File
+  </a>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterClass(val) {
+  if (val) window.location.href = '?view=class&class_label=' + encodeURIComponent(val);
+}
+function filterRoom(val) {
+  if (val) window.location.href = '?view=room&room_number=' + encodeURIComponent(val);
+}
+</script>
+{% endblock %}

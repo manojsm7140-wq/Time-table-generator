@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Staff - TimetableGen{% endblock %}
+{% block page_title %}Manage Staff{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div></div>
+  <a href="{% url 'management:add_staff' %}" class="btn-accent" style="text-decoration:none;">
+    <i class="bi bi-person-plus me-2"></i>Add Staff
+  </a>
+</div>
+
+<div class="glass-card">
+  <h6 style="font-family:'Syne',sans-serif; font-weight:700; margin-bottom:16px;">Staff Members ({{ staff|length }})</h6>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Department</th>
+        <th>Subjects</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in staff %}
+      <tr>
+        <td>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:32px; height:32px; border-radius:50%; background:#e94560; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; font-family:'Syne',sans-serif; flex-shrink:0;">
+              {{ s.user.first_name|first|upper }}{{ s.user.last_name|first|upper }}
+            </div>
+            <span style="font-weight:500;">{{ s.user.get_full_name }}</span>
+          </div>
+        </td>
+        <td style="color:#94a3b8; font-size:0.82rem;">{{ s.user.username }}</td>
+        <td style="color:#94a3b8; font-size:0.82rem;">{{ s.user.email|default:"-" }}</td>
+        <td>{{ s.department.name|default:"-" }}</td>
+        <td>
+          {% for subj in s.subjects.all %}
+          <span style="background:rgba(96,165,250,0.1); color:#60a5fa; border:1px solid rgba(96,165,250,0.2); border-radius:4px; padding:1px 6px; font-size:0.68rem; font-weight:600;">{{ subj.code }}</span>
+          {% empty %}
+          <span style="color:#64748b; font-size:0.78rem;">—</span>
+          {% endfor %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:30px;">No staff added yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
