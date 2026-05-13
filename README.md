@@ -186,5 +186,5 @@ The parser (`timetable/excel_parser.py`) does:
 - ✅ **38 class sections** displayed in grid view
 
 ---
-
+![image alt](https://github.com/manojsm7140-wq/Time-table-generator/blob/235dd7cb207ccf4d5f984a1725c4cacfce65c849/WhatsApp%20Image%202026-04-24%20at%2012.10.32.jpeg)
 
