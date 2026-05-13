@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}JSS TimetableGen{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1a1a2e;
+      --accent: #e94560;
+      --accent2: #0f3460;
+      --surface: #16213e;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --border: rgba(255,255,255,0.08);
+      --card-bg: rgba(255,255,255,0.04);
+      --sidebar-w: 260px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--primary);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+    }
+    h1,h2,h3,h4,h5 { font-family: 'Syne', sans-serif; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w);
+      min-height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0;
+      z-index: 100;
+      transition: transform 0.3s;
+    }
+    .sidebar-brand {
+      padding: 24px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-brand h4 {
+      color: var(--accent);
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .sidebar-brand small { color: var(--text-muted); font-size: 0.72rem; }
+    .sidebar-nav { padding: 16px 0; flex: 1; }
+    .nav-section-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 12px 20px 6px;
+    }
+    .sidebar-nav a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      border-left: 3px solid transparent;
+    }
+    .sidebar-nav a:hover, .sidebar-nav a.active {
+      color: var(--text);
+      background: var(--card-bg);
+      border-left-color: var(--accent);
+    }
+    .sidebar-nav a i { font-size: 1rem; width: 18px; }
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+    }
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .user-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.9rem; color: #fff;
+      font-family: 'Syne', sans-serif;
+    }
+    .user-info small { display: block; color: var(--text-muted); font-size: 0.7rem; }
+    .user-name { font-size: 0.825rem; font-weight: 500; }
+
+    /* MAIN CONTENT */
+    .main-content {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .topbar-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem; }
+    .content-area { padding: 28px; flex: 1; }
+
+    /* CARDS */
+    .glass-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+    }
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+    .stat-number { font-size: 2.2rem; font-weight: 800; font-family: 'Syne', sans-serif; color: var(--accent); }
+    .stat-label { color: var(--text-muted); font-size: 0.8rem; margin-top: 4px; }
+
+    /* TIMETABLE GRID */
+    .tt-table { border-collapse: separate; border-spacing: 3px; width: 100%; }
+    .tt-table th {
+      background: var(--accent2);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-align: center;
+      padding: 10px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+    .tt-table td {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px;
+      vertical-align: top;
+      min-width: 100px;
+      min-height: 60px;
+    }
+    .tt-cell {
+      background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
+      border-radius: 6px;
+      padding: 6px 8px;
+      margin-bottom: 3px;
+      font-size: 0.75rem;
+    }
+    .tt-cell .subject { font-weight: 700; color: #7dd3fc; font-family: 'Syne', sans-serif; }
+    .tt-cell .room { color: var(--text-muted); font-size: 0.68rem; }
+    .tt-cell.conflict { background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%); border: 1px solid var(--accent); }
+    .tt-cell.conflict .subject { color: #fca5a5; }
+    .empty-cell { color: var(--text-muted); font-size: 0.7rem; text-align: center; padding: 10px 0; }
+
+    /* BADGES */
+    .role-badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .role-admin { background: rgba(233,69,96,0.2); color: var(--accent); border: 1px solid var(--accent); }
+    .role-staff { background: rgba(15,52,96,0.4); color: #60a5fa; border: 1px solid #60a5fa; }
+    .role-student { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid #34d399; }
+    .conflict-badge { background: rgba(233,69,96,0.15); color: var(--accent); border: 1px solid rgba(233,69,96,0.3); padding: 4px 12px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; }
+
+    /* BUTTONS */
+    .btn-accent { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 8px 18px; font-weight: 600; font-size: 0.85rem; transition: opacity 0.2s; }
+    .btn-accent:hover { opacity: 0.85; color: #fff; }
+    .btn-outline-accent { background: transparent; color: var(--accent); border: 1px solid var(--accent); border-radius: 8px; padding: 8px 18px; font-weight: 600; font-size: 0.85rem; transition: all 0.2s; }
+    .btn-outline-accent:hover { background: var(--accent); color: #fff; }
+
+    /* FORMS */
+    .form-control, .form-select {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+    }
+    .form-control:focus, .form-select:focus {
+      background: rgba(255,255,255,0.08);
+      border-color: var(--accent);
+      color: var(--text);
+      box-shadow: 0 0 0 3px rgba(233,69,96,0.15);
+    }
+    .form-control::placeholder { color: var(--text-muted); }
+    .form-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 5px; letter-spacing: 0.3px; }
+    .form-select option { background: var(--surface); }
+
+    /* ALERTS */
+    .alert { border-radius: 10px; font-size: 0.875rem; border: none; }
+    .alert-success { background: rgba(16,185,129,0.12); color: #34d399; border-left: 3px solid #34d399; }
+    .alert-danger { background: rgba(233,69,96,0.12); color: #f87171; border-left: 3px solid var(--accent); }
+    .alert-warning { background: rgba(245,158,11,0.12); color: #fcd34d; border-left: 3px solid #f59e0b; }
+    .alert-info { background: rgba(59,130,246,0.12); color: #93c5fd; border-left: 3px solid #3b82f6; }
+
+    /* TABLE */
+    .data-table { width: 100%; border-collapse: separate; border-spacing: 0 4px; }
+    .data-table th { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-muted); padding: 10px 14px; }
+    .data-table td { padding: 12px 14px; background: var(--card-bg); font-size: 0.85rem; border-bottom: 1px solid var(--border); }
+    .data-table tr:first-child td { border-radius: 8px 8px 0 0; }
+    .data-table tr:last-child td { border-radius: 0 0 8px 8px; }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* UPLOAD AREA */
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 40px;
+      text-align: center;
+      transition: border-color 0.2s, background 0.2s;
+      cursor: pointer;
+    }
+    .upload-zone:hover { border-color: var(--accent); background: rgba(233,69,96,0.05); }
+    .upload-zone i { font-size: 2.5rem; color: var(--text-muted); }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+{% if user.is_authenticated %}
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <h4><i class="bi bi-calendar3-week me-2"></i>TimetableGen</h4>
+    <small>JSS College, Mysore</small>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Main</div>
+    <a href="{% url 'timetable:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+      <i class="bi bi-grid-1x2"></i> Dashboard
+    </a>
+    <a href="{% url 'timetable:view_timetable' %}" class="{% if 'view_timetable' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="bi bi-table"></i> View Timetable
+    </a>
+
+    {% if user.role == 'admin' %}
+    <div class="nav-section-label">Admin</div>
+    <a href="{% url 'timetable:upload' %}"><i class="bi bi-cloud-upload"></i> Upload Excel</a>
+    <a href="{% url 'management:subjects' %}"><i class="bi bi-book"></i> Subjects</a>
+    <a href="{% url 'management:rooms' %}"><i class="bi bi-door-open"></i> Rooms</a>
+    <a href="{% url 'management:staff_list' %}"><i class="bi bi-people"></i> Staff</a>
+    <a href="{% url 'management:classes' %}"><i class="bi bi-mortarboard"></i> Classes</a>
+    <a href="{% url 'timetable:conflicts' %}"><i class="bi bi-exclamation-triangle"></i> Conflicts</a>
+    {% endif %}
+
+    {% if user.role == 'staff' %}
+    <div class="nav-section-label">Staff</div>
+    <a href="{% url 'timetable:staff_timetable' %}"><i class="bi bi-person-badge"></i> My Schedule</a>
+    {% endif %}
+
+    <div class="nav-section-label">System</div>
+    <a href="/admin/" {% if user.is_superuser %}{% endif %}><i class="bi bi-shield-lock"></i> Admin Panel</a>
+    <a href="{% url 'accounts:logout' %}"><i class="bi bi-box-arrow-left"></i> Logout</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-pill">
+      <div class="user-avatar">{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}</div>
+      <div class="user-info">
+        <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
+        <small>{{ user.role|title }}</small>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<div class="main-content">
+  <div class="topbar">
+    <span class="topbar-title">{% block page_title %}Dashboard{% endblock %}</span>
+    <div class="d-flex align-items-center gap-3">
+      <span class="role-badge role-{{ user.role }}">{{ user.role }}</span>
+      {% if user.role == 'admin' %}
+      <a href="{% url 'timetable:regenerate' %}" class="btn-outline-accent" style="text-decoration:none; font-size:0.78rem; padding:6px 14px;">
+        <i class="bi bi-arrow-clockwise me-1"></i>Regenerate
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="content-area">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-3" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+{% else %}
+<div style="flex:1">{% block auth_content %}{% endblock %}</div>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>
