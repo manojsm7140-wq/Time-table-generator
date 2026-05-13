@@ -187,4 +187,4 @@ The parser (`timetable/excel_parser.py`) does:
 
 ---
 
-*Built for JSS College, Mysore. Project by Manoj SG, Manoj SM, Arvind BO, Akshay Kumar MJ under guide Vinay R U.*
+
