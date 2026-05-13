@@ -201,4 +201,7 @@ The parser (`timetable/excel_parser.py`) does:
 ![image alt](https://github.com/manojsm7140-wq/Time-table-generator/blob/a1d8117fa065f5ab3bf6f5ea2697410ee4817a60/WhatsApp%20Image%202026-04-24%20at%2012.11.24.jpeg)
 
 
+![image alt](https://github.com/manojsm7140-wq/Time-table-generator/blob/8dca950e9c76ae0a45c391cd23594cc2a6759d67/WhatsApp%20Image%202026-04-24%20at%2012.11.50.jpeg)
+
+
 
